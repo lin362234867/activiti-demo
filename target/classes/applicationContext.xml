@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mvc="http://www.springframework.org/schema/mvc" xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans  http://www.springframework.org/schema/beans/spring-beans.xsd  
+                        http://www.springframework.org/schema/context   http://www.springframework.org/schema/context/spring-context.xsd  
+                        http://www.springframework.org/schema/mvc  http://www.springframework.org/schema/mvc/spring-mvc.xsd
+                        http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd
+                        http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd
+                        ">
+   
+	<import resource="activiti.context.xml"/>
+	<context:component-scan base-package="com.tianque"></context:component-scan>	
+	<!-- 加载数据库配置文件 -->
+	<context:property-placeholder location="classpath:db.properties" />
+
+	<!-- 会话工厂 完美整合 mybatis， 不需要mybatis配置文件 -->
+	<bean name="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<!-- 加载mybatis配置文件 已经不需要 mybatis配置文件了 -->
+		<!-- <property name="configLocation" value="classpath:mybatis.xml"></property> -->
+		<property name="dataSource" ref="dataSource"></property>
+		<!-- 自动扫描mapping.xml文件 支持通配符 hjs/bsp/*/mapping/*.xml -->
+		<property name="mapperLocations">
+			<list>
+				<value>classpath:durcframework_mybatis/expressionBlock.xml</value>
+				<value>classpath:com/tianque/mapping/*.xml</value>
+				<value>classpath:com/tianque/module/*/mapping/*.xml</value>
+			</list>
+		</property>
+		<property name="configLocation">
+			<value>classpath:mybatisConfig.xml</value>
+		</property>
+	</bean>
+	<!-- 数据源 -->
+	<bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource"
+		destroy-method="close">
+		<property name="driverClassName" value="${master.ds.driverClassName}" />
+		<property name="url" value="${master.ds.url}" />
+		<property name="username" value="${master.ds.username}" />
+		<property name="password" value="${master.ds.password}" />
+		<property name="initialSize" value="${master.ds.initialSize}" />
+		<property name="minIdle" value="${master.ds.minIdle}" />
+		<property name="maxIdle" value="${master.ds.maxIdle}" />
+		<property name="maxActive" value="${master.ds.maxActive}" />
+		<property name="logAbandoned" value="${master.ds.logAbandoned}" />
+		<property name="removeAbandoned" value="${master.ds.removeAbandoned}" />
+		<property name="removeAbandonedTimeout" value="${master.ds.removeAbandonedTimeout}" />
+		<property name="maxWait" value="${master.ds.maxWait}" />
+		<property name="validationQuery" value="${master.ds.validationQuery}" />
+	</bean>
+
+
+
+	<!-- mapper接口配置 批量扫描， 自动创建代理对象 创建出来的代理对象 为 mapper接口类的 名称首字母 小写 -->
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<!-- 指定扫描的包名 默认不能用通配符，如果用通配符 必须在 sessionFactory里 扫描一次mapper.xml -->
+		<property name="basePackage" value="com.tianque.dao"></property>
+
+		<!-- 这里 必须使用sqlSessionFactoryBeanName 不能使用 sqlSessionFactory -->
+		<property name="sqlSessionFactoryBeanName" value="sqlSessionFactory"></property>
+
+	</bean>
+
+
+	<!-- 配置事务， 一般加载service层 ， 1 定义一个事务管理器 2 对哪些方法 分别做哪些事情（定义数据库的传播特性) 3 定义拦截哪些个包或者类 
+		里的 方法 （定义切面 asptect） -->
+
+
+
+	<bean id="txManager"
+		class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource" />
+	</bean>
+
+
+	<!-- 定义传播特性（在这些方法上 如何设置事务的创博特性） -->
+	<tx:advice id="txAdvice" transaction-manager="txManager">
+		<tx:attributes>
+			<tx:method name="get*" read-only="true" />
+			<tx:method name="find*" read-only="true" />
+			<tx:method name="select*" read-only="true" />
+			<tx:method name="query*" read-only="true" />
+			<tx:method name="search*" read-only="true" />
+			<tx:method name="count*" read-only="true" />
+			<tx:method name="*" propagation="REQUIRED" rollback-for="java.lang.Exception" />
+		</tx:attributes>
+	</tx:advice>
+	 
+	<!--这句话的作用是注册事务注解处理器 -->
+	<tx:annotation-driven transaction-manager="txManager" />  
+	
+	<aop:config>
+		<!-- 定义一个切面 -->
+		<aop:pointcut id="txPointcut"
+			expression="execution(* com.tianque.service.*.*(..))" />
+		<!-- 绑定 -->
+		<aop:advisor pointcut-ref="txPointcut" advice-ref="txAdvice" />
+
+	</aop:config>
+	
+	  <bean id="issueHandler" class="com.tianque.module.issue.handler.IssueHandler"></bean>
+	<!-- -事务结束 -->
+</beans>

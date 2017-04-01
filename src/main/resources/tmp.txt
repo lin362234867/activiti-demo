@@ -1,0 +1,33 @@
+	<bean id="processEngineConfiguration" class="org.activiti.spring.SpringProcessEngineConfiguration">
+		<property name="dataSource" ref="dataSource" />
+		<!-- 如果没使用默认的H2数据库就必须设置这项 -->
+		<property name="databaseType" value="mysql"></property>
+		<!-- true: 构建流程引擎时，执行检查，如果需要就执行更新。 如果表不存在，就创建 -->
+		<property name="databaseSchemaUpdate" value="true"></property>
+		<property name="transactionManager" ref="txManager" />
+		<property name="jobExecutorActivate" value="false" />
+		<!-- true: 构建流程引擎时，执行检查，如果需要就执行更新。 如果表不存在，就创建 -->
+		<property name="processDefinitionCacheLimit" value="10" />
+		<!-- 自动部署-->
+	    <!-- <property name="deploymentResources" value="classpath*:/workflow/demoProcess.bpmn" /> -->
+		<!-- 自定义流程定义缓存 -->
+		<property name="processDefinitionCache">
+		  <bean class="com.tianque.common.cache.ProcessDefinitionMemCache" />
+		</property>
+		<!-- 普通监听器 -->
+		<property name="eventListeners">
+	      <list>
+	         <bean class="com.tianque.module.issue.listener.IssueEntityEventListenter" />
+	      </list>
+	    </property>
+	    <!-- 特定类型的事件分发时得到通知 -->
+	    <property name="typedEventListeners">
+	      <map>
+	        <entry key="JOB_EXECUTION_SUCCESS,JOB_EXECUTION_FAILURE" >
+	          <list>
+	            <bean class="com.tianque.module.issue.listener.IssueEventListener" />
+	          </list>
+	        </entry>
+	      </map>
+	    </property>
+	</bean>

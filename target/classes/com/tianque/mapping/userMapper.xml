@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.tianque.dao.UserDao">
+	<resultMap id="queryResultMap" type="com.tianque.bean.User">
+		<result column="id" property="id" jdbcType="INTEGER" />
+		<result column="user_name" property="userName" jdbcType="VARCHAR" />
+		<result column="org_Code" property="orgCode" jdbcType="VARCHAR" />
+		<result column="passwd" property="passwd" jdbcType="VARCHAR" />
+		<result column="org_id" property="orgId" jdbcType="INTEGER" />
+		<result column="is_inuse" property="isInuse" jdbcType="INTEGER" />
+	</resultMap>
+	<!-- 根据条件查询记录 -->
+	<select id="find" parameterType="org.durcframework.core.expression.ExpressionQuery"
+		resultMap="queryResultMap">
+		SELECT t.id , t.user_name , t.org_Code , t.passwd , t.org_id,t.is_inuse
+		FROM users t
+		<include refid="expressionBlock.where" />
+		<choose>
+			<when test="sortname == null">ORDER BY t.id desc</when>
+			<otherwise>ORDER BY ${order}</otherwise>
+		</choose>
+		<if test="!isQueryAll">LIMIT #{start,jdbcType=INTEGER},#{limit,jdbcType=INTEGER}
+		</if>
+	</select>
+	<!-- 根据条件查询记录数 -->
+	<select id="findTotalCount" parameterType="org.durcframework.core.expression.ExpressionQuery"
+		resultType="java.lang.Integer">
+		SELECT count(*) FROM users t
+		<include refid="expressionBlock.where" />
+	</select>
+	<!-- 保存,保存全部字段 -->
+	<insert id="save" parameterType="com.tianque.bean.User"
+		keyProperty="id" keyColumn="id" useGeneratedKeys="true">INSERT
+		INTO users ( `user_name` , `org_Code` , `passwd` , `org_id`, `is_inuse` )
+		VALUES ( #{userName,jdbcType=VARCHAR} , #{orgCode,jdbcType=VARCHAR} ,
+		#{passwd,jdbcType=VARCHAR} , #{orgId,jdbcType=INTEGER}, #{isInuse,jdbcType=INTEGER}  )
+	</insert>
+	<!-- 保存,保存不为NULL的字段 -->
+	<insert id="saveNotNull" parameterType="com.tianque.bean.User"
+		keyProperty="id" keyColumn="id" useGeneratedKeys="true">
+		INSERT INTO users
+		<trim prefix="(" suffix=")" suffixOverrides=",">
+			<if test="userName != null">`user_name`,</if>
+			<if test="orgCode != null">`org_Code`,</if>
+			<if test="passwd != null">`passwd`,</if>
+			<if test="orgId != null">`org_id`,</if>
+			<if test="isInuse != null">`is_inuse`,</if>
+		</trim>
+		<trim prefix="values (" suffix=")" suffixOverrides=",">
+			<if test="userName != null">#{userName,jdbcType=VARCHAR},</if>
+			<if test="orgCode != null">#{orgCode,jdbcType=VARCHAR},</if>
+			<if test="passwd != null">#{passwd,jdbcType=VARCHAR},</if>
+			<if test="orgId != null">#{orgId,jdbcType=INTEGER},</if>
+			<if test="isInuse != null">#{isInuse,jdbcType=INTEGER},</if>
+		</trim>
+	</insert>
+	<!-- 更新,更新全部字段 -->
+	<update id="update" parameterType="com.tianque.bean.User">
+		UPDATE users
+		<set>user_name=#{userName,jdbcType=VARCHAR},
+			org_code=#{orgCode,jdbcType=VARCHAR},
+			passwd=#{passwd,jdbcType=VARCHAR},
+			org_id=#{orgId,jdbcType=INTEGER},
+			is_inuse=#{isInuse,jdbcType=INTEGER},
+		</set>
+		WHERE id = #{id,jdbcType=INTEGER}
+	</update>
+	<!-- 根据指定条件更新 -->
+	<update id="updateByExpression">
+		UPDATE users
+		<set>user_name=#{userName,jdbcType=VARCHAR},
+			org_code=#{orgCode,jdbcType=VARCHAR},
+			passwd=#{passwd,jdbcType=VARCHAR},
+			org_id=#{orgId,jdbcType=INTEGER},
+			is_inuse=#{isInuse,jdbcType=INTEGER},
+		</set>
+		<include refid="expressionBlock.updateWhere" />
+	</update>
+	<!-- 更新不为NULL的字段 -->
+	<update id="updateNotNull" parameterType="com.tianque.bean.User">
+		UPDATE users
+		<set>
+			<if test="userName != null">user_name=#{userName,jdbcType=VARCHAR},</if>
+			<if test="orgcode != null">org_code=#{orgcode,jdbcType=VARCHAR},</if>
+			<if test="passwd != null">passwd=#{passwd,jdbcType=VARCHAR},</if>
+			<if test="orgId != null">org_id=#{orgId,jdbcType=INTEGER},</if>
+			<if test="isInuse != null">is_inuse=#{isInuse,jdbcType=INTEGER},</if>
+		</set>
+		WHERE id = #{id,jdbcType=INTEGER}
+	</update>
+	<!-- 根据指定条件更新不为NULL的字段 -->
+	<update id="updateNotNullByExpression">
+		UPDATE users
+		<set>
+			<if test="entity.userName != null">user_name=#{entity.userName,jdbcType=VARCHAR},</if>
+			<if test="entity.orgcode != null">org_code=#{entity.orgcode,jdbcType=VARCHAR},</if>
+			<if test="entity.passwd != null">passwd=#{entity.passwd,jdbcType=VARCHAR},</if>
+			<if test="entity.orgId != null">org_id=#{entity.orgId,jdbcType=INTEGER},</if>
+			<if test="entity.isInuse != null">is_inuse=#{entity.isInuse,jdbcType=INTEGER},</if>
+		</set>
+		<include refid="expressionBlock.updateWhere" />
+	</update>
+	<!-- 根据主键获取单条记录 -->
+	<select id="get" resultMap="queryResultMap" parameterType="com.tianque.bean.User">
+	SELECT t.id,t.user_name,t.org_id,t.org_code,t.passwd,t.is_inuse FROM users t WHERE t.id = #{id,jdbcType=INTEGER}</select>
+	<!-- 根据条件获取单条记录 -->
+	<select id="getByExpression" resultMap="queryResultMap"
+		parameterType="org.durcframework.core.expression.ExpressionQuery">
+		SELECT t.id,t.user_name,t.org_id,t.org_code,t.passwd,t.is_inuse
+		FROM users t
+		<include refid="expressionBlock.where" />
+	</select>
+	<!-- 根据主键删除记录 -->
+	<delete id="del" parameterType="com.tianque.bean.User">
+		DELETE FROM users WHERE
+		id = #{id,jdbcType=INTEGER}</delete>
+	<!-- 根据条件删除记录 -->
+	<delete id="delByExpression" parameterType="org.durcframework.core.expression.ExpressionQuery">
+		DELETE FROM users
+		<include refid="expressionBlock.where" />
+	</delete>
+</mapper>

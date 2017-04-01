@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"  
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:p="http://www.springframework.org/schema/p"  
+    xmlns:context="http://www.springframework.org/schema/context"  
+    xmlns:mvc="http://www.springframework.org/schema/mvc"  
+    xsi:schemaLocation="http://www.springframework.org/schema/beans    
+                        http://www.springframework.org/schema/beans/spring-beans-3.1.xsd    
+                        http://www.springframework.org/schema/context    
+                        http://www.springframework.org/schema/context/spring-context-3.1.xsd    
+                        http://www.springframework.org/schema/mvc    
+                        http://www.springframework.org/schema/mvc/spring-mvc-4.0.xsd">
+	<mvc:annotation-driven/>	
+	<mvc:default-servlet-handler/>
+	<!-- 自动扫描该包，使SpringMVC认为包下用了@controller注解的类是控制器 -->  
+    <context:component-scan base-package="com.tianque"  use-default-filters="false">
+    	<context:include-filter type="regex" expression=".*.controller.*"/>
+    	<context:include-filter type="annotation" expression="org.springframework.stereotype.Controller" />
+    </context:component-scan>  
+    <bean
+		class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping">
+	</bean>
+	<bean
+		class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter">
+
+		<!-- 消息解析 -->
+		<property name="messageConverters">
+			<list>
+				<bean
+					class="org.springframework.http.converter.StringHttpMessageConverter">
+					<property name="supportedMediaTypes">
+						<list>
+							<value>text/html; charset=UTF-8</value>
+							<value>application/json;charset=UTF-8</value>
+						</list>
+					</property>
+				</bean>
+				<!-- 用来配置 返回json对象的参数， 默认 会出现 乱码 需要导入 jackson-annotations.jar,jackson-core.jar,jackson-databind.jar -->
+				<bean
+					class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter">
+					<property name="supportedMediaTypes">
+						<list>
+							<value>text/html; charset=UTF-8</value>
+							<value>application/json;charset=UTF-8</value>
+						</list>
+					</property>
+				</bean>
+			</list>
+		</property>
+
+		<!-- 定义自己的绑定器 -->
+		<property name="webBindingInitializer" ref="chiefBinder"></property>
+
+
+	</bean>
+
+	<bean id="chiefBinder"
+		class="org.springframework.web.bind.support.ConfigurableWebBindingInitializer">
+
+		<!-- 使用自己的绑定 解析器 比如 这里 用来 对 日期类型进行参数绑定 -->
+		<property name="conversionService" ref="chiefTimeConversionService"></property>
+
+		<!-- 加 校验器 -->
+		<!-- <property name="validator" -->
+	</bean>
+	<bean id="chiefTimeConversionService"
+		class="org.springframework.format.support.FormattingConversionServiceFactoryBean">
+		<!-- 定义自己的转换器 -->
+		<property name="converters">
+			<list>
+				<!-- 需要自己写一个类 public class TimeTrans implements Converter<String, Date> -->
+				<bean class="com.tianque.converter.TimeTrans"></bean>
+				<!-- 其他类型转换 -->
+				<!-- <bean class="hjs.bsp.util.Txxx"></bean> -->
+			</list>
+		</property>
+	</bean>
+    <!-- 定义跳转的文件的前后缀 ，视图模式配置-->  
+    <bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">  
+        <!-- 这里的配置我的理解是自动给后面action的方法return的字符串加上前缀和后缀，变成一个 可用的url地址 -->  
+        <property name="prefix" value="/WEB-INF/" />  
+        <property name="suffix" value=".jsp" />  
+    </bean>  
+      
+    <!-- 配置文件上传，如果没有使用文件上传可以不用配置，当然如果不配，那么配置文件中也不必引入上传组件包 -->  
+    <bean id="multipartResolver"    
+        class="org.springframework.web.multipart.commons.CommonsMultipartResolver">    
+        <!-- 默认编码 -->  
+        <property name="defaultEncoding" value="utf-8" />    
+        <!-- 文件大小最大值 -->  
+        <property name="maxUploadSize" value="10485760000" />    
+        <!-- 内存中的最大值 -->  
+        <property name="maxInMemorySize" value="40960" />    
+    </bean>   
+</beans>
